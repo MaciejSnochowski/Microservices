@@ -1,11 +1,15 @@
 package com.microservices.productService.service;
 
+import com.microservices.productService.ProductServiceApplication;
 import com.microservices.productService.dto.ProductRequest;
+import com.microservices.productService.dto.ProductResponse;
 import com.microservices.productService.model.Product;
 import com.microservices.productService.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -25,5 +29,18 @@ public class ProductService {
         } catch (Exception e) {
             log.info("Product unable to be saved");
         }
+    }
+    public List<ProductResponse> getAllProducts(){
+        List<Product> products = productRepository.findAll();
+        log.info("DONE");
+        return products.stream().map(product -> mapToProductResponse(product)).toList();
+    }
+    private static ProductResponse mapToProductResponse(Product product){
+        return new ProductResponse().builder()
+                .id(product.getId())
+                .name(product.getName())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .build();
     }
 }
