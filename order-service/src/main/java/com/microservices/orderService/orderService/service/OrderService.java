@@ -27,7 +27,7 @@ public class OrderService {
     private final WebClient.Builder webClientBuilder;
 
 
-    public void placeOrder(OrderRequest orderRequest){
+    public String placeOrder(OrderRequest orderRequest){
         Order order = new Order();
         order.setOrderNumber(UUID.randomUUID().toString());
 
@@ -57,6 +57,8 @@ public class OrderService {
                                      .allMatch(InventoryResponse::isInStock);
         if(allProductsInStock){
             orderRepository.save(order);
+            return "Order Placed Successfully";
+
         }
         else {
             log.info("Throw Exception");
