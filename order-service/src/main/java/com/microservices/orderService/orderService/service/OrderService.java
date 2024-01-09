@@ -3,6 +3,7 @@ package com.microservices.orderService.orderService.service;
 import com.microservices.orderService.orderService.dto.InventoryResponse;
 import com.microservices.orderService.orderService.dto.OrderLineItemsDto;
 import com.microservices.orderService.orderService.dto.OrderRequest;
+import com.microservices.orderService.orderService.event.OrderPlacedEvent;
 import com.microservices.orderService.orderService.model.Order;
 import com.microservices.orderService.orderService.model.OrderLineItems;
 import com.microservices.orderService.orderService.repository.OrderRepository;
@@ -10,6 +11,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.sql.exec.ExecutionException;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -25,9 +27,9 @@ import java.util.UUID;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final WebClient.Builder webClientBuilder;
+    private final KafkaTemplate<String,OrderPlacedEvent> kafkaTemplate;
 
-
-    public void placeOrder(OrderRequest orderRequest){
+    public String placeOrder(OrderRequest orderRequest){
         Order order = new Order();
         order.setOrderNumber(UUID.randomUUID().toString());
 
@@ -57,6 +59,8 @@ public class OrderService {
                                      .allMatch(InventoryResponse::isInStock);
         if(allProductsInStock){
             orderRepository.save(order);
+            kafkaTemplate.send("notificationTopic",new OrderPlacedEvent(order.getOrderNumber()));
+            return "Order Placed Successfully";
         }
         else {
             log.info("Throw Exception");
